@@ -10,8 +10,8 @@ class RationalQLearningAgent(BaseAgent):
             num_states: int,
             num_actions: int,
             alpha: float = 0.1,
-            gamma: float = 0.9,
-            epsilon: float = 0.1,
+            gamma: float = 0.99,
+            epsilon: float = 1.0,
     ):
         self.Q = np.zeros((num_states, num_actions))
         self.alpha = alpha
