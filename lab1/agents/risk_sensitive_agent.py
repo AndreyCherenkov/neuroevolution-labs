@@ -11,7 +11,7 @@ class RiskSensitiveAgent(BaseAgent):
             alpha: float = 0.1,
             gamma: float = 0.99,
             epsilon: float = 1.0,
-            eta: float = 0.01,
+            eta: float = 2.0,
     ):
         self.alpha = alpha
         self.gamma = gamma

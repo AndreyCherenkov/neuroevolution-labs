@@ -13,7 +13,7 @@ class ProspectAgent(BaseAgent):
             epsilon: float = 1.0,
             alpha_p: float = 0.88,
             beta_p: float = 0.88,
-            lambda_p: float = 2.25,
+            lambda_p: float = 2.35,
     ):
         self.Q = np.zeros([num_states, num_actions])
         self.alpha = alpha
@@ -27,7 +27,7 @@ class ProspectAgent(BaseAgent):
     def act(self, state_idx: int) -> int:
         if np.random.random() < self.epsilon:
             return np.random.randint(self.num_actions)
-        return np.argmax(self.Q[state_idx]).astype(int)
+        return int(np.argmax(self.Q[state_idx]))
 
     def update(self, state, action, reward, next_state, done):
         subjective_reward = self.__value_function(reward)

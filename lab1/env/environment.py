@@ -32,7 +32,9 @@ class Environment:
         self.current_x = agent_spawn.x_spawn
         self.current_y = agent_spawn.y_spawn
 
-        self.actions = Action.get_all_actions(velocities[:3])
+        self.actions = Action.get_all_actions(velocities)
+
+        self.time = 0
 
     def reset(self) -> State:
         self.agent_spawn = AgentSpawn()
@@ -50,13 +52,15 @@ class Environment:
             self.velocities[random.randint(0, len(self.velocities) - 1)],
         )
 
+        self.time = 0
+
         return self.state
 
-    def step(self, action_idx: int, t: int) -> (State, float, bool):
+    def step(self, action_idx: int) -> (State, float, bool, bool):
         if self.state is None:
             raise RuntimeError("Environment should be reset()")
 
-        if t % self.wind.update_rate_steps == 0:
+        if self.time > 0 and self.time % self.wind.update_rate_steps == 0:
             self.wind.update()
 
         wind_x, wind_y = self.wind.current()
@@ -84,15 +88,14 @@ class Environment:
             new_y = self.current_y
 
         # батарея
-        state = self.state
-        battery = (state.battery - 0.018 * state.velocity ** 2 - 0.03 * (wind_x ** 2 + wind_y ** 2) ** 2 -
-                   0.002 * abs(state.velocity))  # todo перепроверить формулу
+        battery = (self.state.battery - 0.018 * action.velocity ** 2 - 0.003 * (wind_x ** 2 + wind_y ** 2) -
+                   0.002 * abs(action.velocity))
 
         in_station = self.station.contains(new_x, new_y)
         if in_station:
             battery += 0.025
 
-        battery = min(1.0, battery)
+        battery = min(1.0, max(0.0, battery))
 
         self.current_x = new_x
         self.current_y = new_y
@@ -104,15 +107,17 @@ class Environment:
             action.velocity
         )
 
-        return self.state, *self.__reward(self.state, t, in_station)
+        self.time += 1
 
-    def __reward(self, state: State, t: int, in_station: bool) -> (float, bool):
+        return self.state, *self.__reward(self.state, in_station), collided
+
+    def __reward(self, state: State, in_station: bool) -> (float, bool):
         station = self.station
 
         success = (pow(pow(self.current_x - station.x0, 2) + pow(self.current_y - station.y0, 2), 0.5) < 0.9 and
                    state.battery > 0.90 and
-                   t <= 140)
-        failed = state.battery < 0.04 or t >= 200
+                   self.time <= 140)
+        failed = state.battery < 0.04 or self.time >= 200
 
         if success:
             return 90, success

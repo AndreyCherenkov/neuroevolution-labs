@@ -22,7 +22,7 @@ class RationalQLearningAgent(BaseAgent):
     def act(self, state_idx: int) -> int:
         if np.random.random() < self.epsilon:
             return np.random.randint(self.num_actions)
-        return np.argmax(self.Q[state_idx]).astype(int)
+        return int(np.argmax(self.Q[state_idx]))
 
     def update(self, state, action, reward, next_state_idx, done):
         if done:
