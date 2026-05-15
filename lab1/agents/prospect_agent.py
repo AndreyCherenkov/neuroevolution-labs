@@ -1,34 +1,29 @@
+from typing import override
+
 import numpy as np
 
-from lab1.agents.base import BaseAgent
+from lab1.agents.q_agent_base import QLearningAgentBase
 
 
-class ProspectAgent(BaseAgent):
+class ProspectAgent(QLearningAgentBase):
     def __init__(
             self,
             num_states: int,
             num_actions: int,
-            alpha: float = 0.1,
-            gamma: float = 0.99,
-            epsilon: float = 1.0,
             alpha_p: float = 0.88,
             beta_p: float = 0.88,
             lambda_p: float = 2.35,
     ):
-        self.Q = np.zeros([num_states, num_actions])
-        self.alpha = alpha
-        self.gamma = gamma
-        self.epsilon = epsilon
+        super().__init__(
+            num_states=num_states,
+            num_actions=num_actions
+        )
+
         self.alpha_p = alpha_p
         self.beta_p = beta_p
         self.lambda_p = lambda_p
-        self.num_actions = num_actions
 
-    def act(self, state_idx: int) -> int:
-        if np.random.random() < self.epsilon:
-            return np.random.randint(self.num_actions)
-        return int(np.argmax(self.Q[state_idx]))
-
+    @override
     def update(self, state, action, reward, next_state, done):
         subjective_reward = self.__value_function(reward)
         if done:
@@ -39,6 +34,17 @@ class ProspectAgent(BaseAgent):
         td_error = target - self.Q[state][action]
 
         self.Q[state][action] += self.alpha * td_error
+
+    @override
+    def get_metrics(self) -> dict:
+        return {
+            "alpha": self.alpha,
+            "gamma": self.gamma,
+            "epsilon": self.epsilon,
+            "alpha_p": self.alpha_p,
+            "beta_p": self.beta_p,
+            "lambda_p": self.lambda_p,
+        }
 
     def __value_function(self, reward: float) -> float:
         if reward >= 0:

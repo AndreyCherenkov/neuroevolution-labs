@@ -9,3 +9,10 @@ class BaseAgent(ABC):
     @abstractmethod
     def update(self, state, action, reward, next_state, done):
         pass
+
+    @abstractmethod
+    def update_epsilon(self):
+        pass
+
+    def get_metrics(self) -> dict:
+        return {}
