@@ -56,7 +56,7 @@ class Environment:
 
         return self.state
 
-    def step(self, action_idx: int) -> (State, float, bool, bool):
+    def step(self, action_idx: int) -> (State, float, bool, bool, bool):
         if self.state is None:
             raise RuntimeError("Environment should be reset()")
 
@@ -111,7 +111,7 @@ class Environment:
 
         return self.state, *self.__reward(self.state, in_station), collided
 
-    def __reward(self, state: State, in_station: bool) -> (float, bool):
+    def __reward(self, state: State, in_station: bool) -> (float, bool, bool):
         station = self.station
 
         success = (pow(pow(self.current_x - station.x0, 2) + pow(self.current_y - station.y0, 2), 0.5) < 0.9 and
@@ -120,11 +120,11 @@ class Environment:
         failed = state.battery < 0.04 or self.time >= 200
 
         if success:
-            return 90, success
+            return 90, success, True
         elif failed:
-            return -170, failed
+            return -170, failed, False
         else:
             reward = -1.0 - 0.030 * pow(state.velocity, 2)
             if in_station:
                 reward += 0.12 * 0.025
-            return reward, False
+            return reward, False, False

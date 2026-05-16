@@ -22,7 +22,7 @@ def train(
             state_idx = state.discretize().to_index()
 
             action_idx = agent.act(state_idx)
-            next_state, reward, done, collided = env.step(action_idx)
+            next_state, reward, done, _, collided = env.step(action_idx)
 
             next_state_idx = next_state.discretize().to_index()
 
