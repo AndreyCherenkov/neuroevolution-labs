@@ -11,7 +11,7 @@ class QLearningAgentBase(BaseAgent, ABC):
             self,
             num_states: int,
             num_actions: int,
-            alpha: float = 0.1,
+            alpha: float = 0.05,
             gamma: float = 0.99,
             epsilon: float = 1.0,
     ):

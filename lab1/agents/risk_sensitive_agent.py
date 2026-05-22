@@ -42,7 +42,7 @@ class RiskSensitiveAgent(QLearningAgentBase):
 
         updated_u = (1 - self.alpha) * current_u + self.alpha * target_u
 
-        updated_u = max(updated_u, 1e-12)  # todo read
+        updated_u= np.clip(updated_u, 1e-12, 1e+300)  # todo read
 
         self.U[state_idx, action_idx] = updated_u
 
