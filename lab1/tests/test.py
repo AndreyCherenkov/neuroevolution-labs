@@ -17,17 +17,21 @@ def test_agents(
     total_energy_consumed = 0
     episodes_with_collisions = 0
 
-    # --- Списки для сбора сырых данных для графиков ---
-    success_lengths = []  # Длины только успешных эпизодов (для CDF)
-    final_x = []  # Координаты X на момент завершения (для Heatmap)
-    final_y = []  # Координаты Y на момент завершения (для Heatmap)
-    final_charges = []  # Финальный заряд батареи (для Heatmap)
-    trajectories = []  # Список траекторий для первых 4-х эпизодов
+    # --- Списки для сбора данных для графиков ---
+    success_lengths = []
 
-    # --- Дополнительные списки выборки для t-test ---
-    all_episode_lengths = []  # Шаги абсолютно всех эпизодов
-    success_binary = []  # 1.0 если успех, 0.0 если провал
-    collision_binary = []  # 1.0 если было столкновение, 0.0 если нет
+    # Списки для хитмапа ФИНАЛЬНОГО заряда (для всех 300 эпизодов)
+    final_x = []
+    final_y = []
+    final_charges = []
+
+    trajectories = []
+
+    # --- Списки выборки для t-test ---
+    all_episode_lengths = []
+    success_binary = []
+    collision_binary = []
+    battery_costs = []
 
     for episode in range(episodes):
         state = env.reset()
@@ -37,8 +41,10 @@ def test_agents(
         episode_has_collision = False
         episode_success = False
 
+        should_track_trajectory = (episode % 75 == 0)
+
         current_trajectory = []
-        if episode < 4:
+        if should_track_trajectory:
             current_trajectory.append((state.delta_x, state.delta_y))
 
         while not done:
@@ -55,15 +61,18 @@ def test_agents(
 
             state = next_state
 
-            if episode < 4:
+            if should_track_trajectory:
                 current_trajectory.append((state.delta_x, state.delta_y))
 
-        # Наполнение выборок для статистического анализа
+        # === ТОЧКА СБОРА ДЛЯ HEATMAP ===
+        final_x.append(state.delta_x)
+        final_y.append(state.delta_y)
+        final_charges.append(state.battery)
+
         all_episode_lengths.append(float(env.time))
         success_binary.append(1.0 if episode_success else 0.0)
         collision_binary.append(1.0 if episode_has_collision else 0.0)
 
-        # Стандартные агрегации
         if episode_success:
             successes += 1
             success_episode_length += env.time
@@ -72,27 +81,21 @@ def test_agents(
         if episode_has_collision:
             episodes_with_collisions += 1
 
-        total_energy_consumed += (initial_battery - state.battery)
+        episode_battery_cost = initial_battery - state.battery
+        total_energy_consumed += episode_battery_cost
+        battery_costs.append(episode_battery_cost)
 
-        final_x.append(state.delta_x)
-        final_y.append(state.delta_y)
-        final_charges.append(state.battery)
-
-        if episode < 4:
+        if should_track_trajectory:
             trajectories.append(current_trajectory)
 
     if old_epsilon is not None:
         agent.epsilon = old_epsilon
 
-    # Расчет агрегированных метрик
     success_percentage = (successes / episodes) * 100
-
     average_success_episode_length = (
         success_episode_length / successes if successes > 0 else 0.0
     )
-
     average_charge_cost = total_energy_consumed / episodes
-
     average_episode_collision_percentage = (episodes_with_collisions / episodes) * 100
 
     metric = TestMetric(
@@ -102,19 +105,17 @@ def test_agents(
         average_episode_collision_percentage=average_episode_collision_percentage
     )
 
-    # Формируем итоговый словарь сырых данных
     raw_data = {
-        # Данные для графиков (совместимость со старыми методами)
         "success_lengths": success_lengths,
         "final_x": final_x,
         "final_y": final_y,
         "final_charges": final_charges,
         "trajectories": trajectories,
 
-        # Полноценные выборки фиксированной длины (N = 300) для t-тестов
         "all_episode_lengths": all_episode_lengths,
         "success_binary": success_binary,
-        "collision_binary": collision_binary
+        "collision_binary": collision_binary,
+        "battery_costs": battery_costs
     }
 
     return metric, raw_data

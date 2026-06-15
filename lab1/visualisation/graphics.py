@@ -36,10 +36,8 @@ def create_trajectories_fig(trajectories: list, agent_name: str, is_relative: bo
     """
     fig, ax = plt.subplots(figsize=(12, 6))
 
-    # Координаты зарядной станции из Варианта 1
     st_x, st_y = 21.5, 8.5
 
-    # --- 1. Отрисовка препятствий (Вариант 1) ---
     obstacles = [
         patches.Rectangle((10.0, 2.0), 1.5, 3.5, color='gray', alpha=0.7, hatch='//'),
         patches.Rectangle((13.0, 7.0), 1.5, 3.0, color='gray', alpha=0.7, hatch='//'),
@@ -150,8 +148,8 @@ def create_final_charge_heatmap_fig(final_x: list, final_y: list, final_charges:
         )
         return fig
 
-    x_bins = 14
-    y_bins = 14
+    x_bins = 24
+    y_bins = 12
 
     heatmap_sum = np.zeros((y_bins, x_bins))
     heatmap_count = np.zeros((y_bins, x_bins))

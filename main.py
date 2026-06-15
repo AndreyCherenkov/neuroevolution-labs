@@ -45,20 +45,16 @@ if __name__ == '__main__':
     test_epsilon = 0.005
     experiment_name = "DroneNavigation"
 
-    # Базовый агент для попарного сравнения (Контрольная группа)
     control_agent_name = "RationalQLearningAgent"
 
-    # Структура для сохранения сырых выборок (фиксированный размер N=300)
     all_agents_raw_metrics = {}
 
     print("=== Старт комплексного пайплайна: Обучение и Тестирование ===")
 
-    # === ЭТАП 1: Обучение, валидация и логирование индивидуальных результатов ===
     for idx, (agent, base_name) in enumerate(agents_to_run, 1):
         print(f"\n[{idx}/{len(agents_to_run)}] Обработка архитектуры: {base_name}")
         print("-" * 50)
 
-        # Шаг 1.1: Фаза обучения агента
         train_run_name = f"{base_name}_{episodes_train}"
         training_rewards = log_data(
             experiment_name=experiment_name,
@@ -70,7 +66,6 @@ if __name__ == '__main__':
         )
         print(f"-> Обучение завершено. Собрано {len(training_rewards)} наград.")
 
-        # Шаг 1.2: Фаза инференса и тестирования (сбор полных выборок)
         metric, raw_data = test_agents(
             env=en,
             agent=agent,
@@ -78,7 +73,6 @@ if __name__ == '__main__':
             epsilon=test_epsilon
         )
 
-        # Шаг 1.3: Построение графиков и сохранение базовых метрик в MLflow
         test_run_name = f"{base_name}_test_{episodes_train}"
         evaluate_and_visualize(
             experiment_name=experiment_name,
@@ -91,7 +85,6 @@ if __name__ == '__main__':
             training_rewards=training_rewards
         )
 
-        # Шаг 1.4: Архивация сырых распределений в оперативную память для t-теста
         all_agents_raw_metrics[base_name] = {
             "all_episode_lengths": raw_data.get("all_episode_lengths", []),
             "final_charges": raw_data.get("final_charges", []),
@@ -100,15 +93,13 @@ if __name__ == '__main__':
         }
         print(f"-> Тестирование и индивидуальное логирование для {base_name} успешно завершены.")
 
-    # === ЭТАП 2: Попарный статистический анализ (Welch t-test) ===
     print("\n" + "=" * 60)
     print("Запуск многофакторного статистического анализа...")
     print("=" * 60)
 
-    # Набор метрик для проверки статистических гипотез
     metrics_to_test = [
         "all_episode_lengths",  # Время/длина полёта (все эпизоды)
-        "final_charges",  # Остаточный заряд батареи (все эпизоды)
+        "battery_costs",  # Остаточный заряд батареи (все эпизоды)
         "success_binary",  # Вероятность успешного завершения задачи
         "collision_binary"  # Вероятность возникновения коллизии
     ]
@@ -116,7 +107,6 @@ if __name__ == '__main__':
     mlflow.set_tracking_uri('http://localhost:5000')
     mlflow.set_experiment(experiment_name)
 
-    # Генерируем выделенный агрегирующий Run для хранения стат-анализа всей серии тестов
     with mlflow.start_run(run_name=f"Statistical_Analysis_Welch_t_test_{episodes_train}"):
 
         for agent_name in all_agents_raw_metrics.keys():
@@ -136,7 +126,6 @@ if __name__ == '__main__':
                     print(f"[Пропуск] Метрика '{metric_key}': недостаточно данных для вычисления дисперсии.")
                     continue
 
-                # Расчёт t-критерия Уэлча без внешних математических зависимостей
                 test_results = perform_pure_python_ttest(
                     agent_a_name=control_agent_name,
                     agent_b_name=agent_name,
@@ -154,7 +143,6 @@ if __name__ == '__main__':
                     f"{run_prefix}_significant": test_results["is_significant"]
                 })
 
-                # Сохранение физического текстового отчёта на диск и его отправка в артефакты
                 report_filename = f"t_test_{agent_name}_vs_Rational_{metric_key}.txt"
                 with open(report_filename, "w", encoding="utf-8") as f:
                     f.write(test_results["text_report"])

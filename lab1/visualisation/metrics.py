@@ -142,8 +142,8 @@ def evaluate_and_visualize(
     agent: QLearningAgentBase,
     episodes: int = 300,
     epsilon: float = 0.005,
-    training_rewards: list[float] = None,  # <--- Передаем сюда награды из log_data
-    smoothing_window: int = 150            # <--- Окно сглаживания
+    training_rewards: list[float] = None,
+    smoothing_window: int = 150
 ) -> None:
     mlflow.set_tracking_uri('http://localhost:5000')
     mlflow.set_experiment(experiment_name)
