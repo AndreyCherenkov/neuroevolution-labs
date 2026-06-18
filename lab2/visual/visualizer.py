@@ -71,7 +71,7 @@ def run_saved_agent(
 
 if __name__ == "__main__":
     # Глобальные параметры по умолчанию
-    DEFAULT_MODEL = "lab2/best_neat_genome.pkl"
+    DEFAULT_MODEL = "C:/Users/Andrey/PycharmProjects/NeuroevolutionaryComputations/lab2/best_neat_genome.pkl"
     DEFAULT_EPISODES = 10
 
     episodes_count = DEFAULT_EPISODES
